@@ -1,8 +1,19 @@
+import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card } from "@/components/ui/card";
-import { Mic, Search, History, FileText, TrendingUp } from "lucide-react";
+import { Search, History, FileText, TrendingUp } from "lucide-react";
+import VoiceCommandCenter from "@/components/VoiceCommandCenter";
+import { ParsedCommand } from "@/utils/nlpProcessor";
 
 const InvestigatorDashboard = () => {
+  const [lastCommand, setLastCommand] = useState<ParsedCommand | null>(null);
+
+  const handleCommandParsed = (command: ParsedCommand) => {
+    setLastCommand(command);
+    console.log('Command received in dashboard:', command);
+    // TODO: Phase 3 - Implement actual search functionality
+  };
+
   return (
     <Layout role="investigator">
       <div className="space-y-6">
@@ -69,27 +80,10 @@ const InvestigatorDashboard = () => {
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Voice Command Center - Placeholder */}
-          <Card className="lg:col-span-2 p-8">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="rounded-full bg-primary/10 p-8">
-                  <Mic className="h-16 w-16 text-primary" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-bold">Voice Command Center</h2>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Phase 2: Voice recognition and NLP processing will be implemented here
-              </p>
-              <div className="pt-4">
-                <div className="inline-block px-4 py-2 bg-muted rounded-full">
-                  <p className="text-sm font-mono text-muted-foreground">
-                    Coming in Phase 2
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
+          {/* Voice Command Center */}
+          <div className="lg:col-span-2">
+            <VoiceCommandCenter onCommandParsed={handleCommandParsed} />
+          </div>
 
           {/* Quick Actions */}
           <Card className="p-6">
@@ -126,14 +120,18 @@ const InvestigatorDashboard = () => {
           </Card>
         </div>
 
-        {/* Recent Activity */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No recent activity</p>
-            <p className="text-sm mt-2">Your searches and case views will appear here</p>
-          </div>
-        </Card>
+        {/* Search Results Placeholder */}
+        {lastCommand && !lastCommand.needsClarification && (
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Search Results</h3>
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Phase 3: Search results will be displayed here</p>
+              <p className="text-sm mt-2">
+                Case search and filtering functionality coming in Phase 3
+              </p>
+            </div>
+          </Card>
+        )}
       </div>
     </Layout>
   );

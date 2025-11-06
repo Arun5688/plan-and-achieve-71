@@ -2,13 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LoginSelection from "./pages/LoginSelection";
-import InvestigatorLogin from "./pages/InvestigatorLogin";
-import AdminLogin from "./pages/AdminLogin";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Auth from "./pages/Auth";
 import InvestigatorDashboard from "./pages/InvestigatorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -19,14 +18,27 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Login Routes */}
-          <Route path="/" element={<LoginSelection />} />
-          <Route path="/investigator-login" element={<InvestigatorLogin />} />
-          <Route path="/admin-login" element={<AdminLogin />} />
+          {/* Auth Routes */}
+          <Route path="/" element={<Navigate to="/auth" replace />} />
+          <Route path="/auth" element={<Auth />} />
           
-          {/* Dashboard Routes */}
-          <Route path="/investigator" element={<InvestigatorDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          {/* Protected Dashboard Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <InvestigatorDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Catch-all 404 */}
           <Route path="*" element={<NotFound />} />

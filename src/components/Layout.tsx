@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Shield, Menu, X, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,13 +14,14 @@ const Layout = ({ children, role }: LayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    // TODO: Implement actual logout logic in Phase 5
-    navigate("/");
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/auth");
   };
 
-  const isLoginPage = location.pathname.includes("login") || location.pathname === "/";
+  const isLoginPage = location.pathname.includes("auth") || location.pathname === "/";
 
   if (isLoginPage) {
     return <div className="min-h-screen">{children}</div>;
@@ -32,7 +34,7 @@ const Layout = ({ children, role }: LayoutProps) => {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link to={role === "admin" ? "/admin" : "/investigator"} className="flex items-center gap-3">
+            <Link to={role === "admin" ? "/admin" : "/dashboard"} className="flex items-center gap-3">
               <div className="rounded-lg bg-primary p-2">
                 <Shield className="h-6 w-6 text-primary-foreground" />
               </div>
@@ -47,22 +49,10 @@ const Layout = ({ children, role }: LayoutProps) => {
               {role === "investigator" && (
                 <>
                   <Link
-                    to="/investigator"
+                    to="/dashboard"
                     className="text-sm font-medium transition-colors hover:text-primary"
                   >
                     Dashboard
-                  </Link>
-                  <Link
-                    to="/investigator/search"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Search
-                  </Link>
-                  <Link
-                    to="/investigator/history"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    History
                   </Link>
                 </>
               )}
@@ -73,24 +63,6 @@ const Layout = ({ children, role }: LayoutProps) => {
                     className="text-sm font-medium transition-colors hover:text-primary"
                   >
                     Dashboard
-                  </Link>
-                  <Link
-                    to="/admin/data"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Data Management
-                  </Link>
-                  <Link
-                    to="/admin/users"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Users
-                  </Link>
-                  <Link
-                    to="/admin/analytics"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Analytics
                   </Link>
                 </>
               )}
@@ -122,25 +94,11 @@ const Layout = ({ children, role }: LayoutProps) => {
               {role === "investigator" && (
                 <>
                   <Link
-                    to="/investigator"
+                    to="/dashboard"
                     className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
-                  </Link>
-                  <Link
-                    to="/investigator/search"
-                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Search
-                  </Link>
-                  <Link
-                    to="/investigator/history"
-                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    History
                   </Link>
                 </>
               )}
@@ -152,27 +110,6 @@ const Layout = ({ children, role }: LayoutProps) => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
-                  </Link>
-                  <Link
-                    to="/admin/data"
-                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Data Management
-                  </Link>
-                  <Link
-                    to="/admin/users"
-                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Users
-                  </Link>
-                  <Link
-                    to="/admin/analytics"
-                    className="px-4 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Analytics
                   </Link>
                 </>
               )}

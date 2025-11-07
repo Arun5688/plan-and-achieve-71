@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface UseTextToSpeechReturn {
   speak: (text: string, options?: SpeechSynthesisUtteranceOptions) => void;
@@ -31,10 +31,12 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
   }, [isSupported]);
 
   // Load voices on mount and when they change
-  if (isSupported) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
-  }
+  useEffect(() => {
+    if (isSupported) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+  }, [isSupported, loadVoices]);
 
   const speak = useCallback(
     (text: string, options?: SpeechSynthesisUtteranceOptions) => {

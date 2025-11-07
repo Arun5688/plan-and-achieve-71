@@ -23,15 +23,23 @@ const Auth = () => {
     password: ''
   });
   
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, user, getUserRole } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
+    const redirectUser = async () => {
+      if (user) {
+        const role = await getUserRole();
+        if (role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
+      }
+    };
+    redirectUser();
+  }, [user, navigate, getUserRole]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +77,7 @@ const Auth = () => {
         title: 'Success',
         description: 'Account created successfully! Redirecting...'
       });
-      setTimeout(() => navigate('/dashboard'), 1000);
+      // Let the useEffect handle the redirect based on role
     }
   };
 
@@ -91,7 +99,7 @@ const Auth = () => {
         title: 'Success',
         description: 'Signed in successfully! Redirecting...'
       });
-      setTimeout(() => navigate('/dashboard'), 1000);
+      // Let the useEffect handle the redirect based on role
     }
   };
 

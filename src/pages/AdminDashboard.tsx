@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,12 +6,16 @@ import DataUploadPanel from "@/components/admin/DataUploadPanel";
 import CaseWorkflow from "@/components/admin/CaseWorkflow";
 import UserManagement from "@/components/admin/UserManagement";
 import SystemAnalytics from "@/components/admin/SystemAnalytics";
-import { mockUsers, mockWorkflowCases } from "@/utils/mockAdminData";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useWorkflowCases } from "@/hooks/useWorkflowCases";
 
 const AdminDashboard = () => {
-  const [activeUsers] = useState(mockUsers.filter(u => u.isActive).length);
-  const [pendingApprovals] = useState(mockWorkflowCases.filter(c => c.stage === 'pending_review').length);
-  const [totalCases] = useState(mockWorkflowCases.length);
+  const { users } = useAdminUsers();
+  const { cases } = useWorkflowCases();
+  
+  const activeUsers = users.filter(u => u.is_active).length;
+  const pendingApprovals = cases.filter(c => c.workflow_stage === 'pending_review').length;
+  const totalCases = cases.length;
 
   return (
     <Layout role="admin">

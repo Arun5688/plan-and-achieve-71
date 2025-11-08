@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -12,31 +11,27 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { 
-  CheckCircle, XCircle, Edit, ArrowRight, 
-  Clock, AlertTriangle, MessageSquare 
+  CheckCircle, Edit, 
+  Clock
 } from 'lucide-react';
-import { WorkflowCase } from '@/types/admin';
-import { mockWorkflowCases } from '@/utils/mockAdminData';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { useWorkflowCases, WorkflowCase } from '@/hooks/useWorkflowCases';
 
 const CaseWorkflow = () => {
-  const [cases, setCases] = useState<WorkflowCase[]>(mockWorkflowCases);
+  const { cases, updateStage, approveCase } = useWorkflowCases();
   const [selectedCase, setSelectedCase] = useState<WorkflowCase | null>(null);
-  const [comment, setComment] = useState('');
   const [filter, setFilter] = useState<string>('all');
-  const { toast } = useToast();
 
   const filteredCases = cases.filter(c => {
     if (filter === 'all') return true;
-    if (filter === 'pending_review') return c.stage === 'pending_review';
-    if (filter === 'urgent') return c.priority === 'urgent';
+    if (filter === 'pending_review') return c.workflow_stage === 'pending_review';
+    if (filter === 'urgent') return c.severity === 'critical';
     return true;
   });
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical':
         return 'bg-red-500/10 text-red-500 border-red-500/20';
       case 'high':
         return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
@@ -51,79 +46,15 @@ const CaseWorkflow = () => {
     switch (stage) {
       case 'pending_review':
         return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'review':
+      case 'under_review':
         return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'edit':
+      case 'needs_editing':
         return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-      case 'approve':
+      case 'approved':
         return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'publish':
+      case 'published':
         return 'bg-primary/10 text-primary border-primary/20';
     }
-  };
-
-  const handleStageChange = (caseId: string, newStage: WorkflowCase['stage']) => {
-    setCases(prev => prev.map(c => 
-      c.id === caseId 
-        ? { ...c, stage: newStage, updatedAt: new Date().toISOString() }
-        : c
-    ));
-    
-    toast({
-      title: "Stage updated",
-      description: `Case moved to ${newStage.replace('_', ' ')}`,
-    });
-  };
-
-  const handleApprove = (caseId: string) => {
-    if (!comment.trim()) {
-      toast({
-        title: "Comment required",
-        description: "Please add a comment before approving",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setCases(prev => prev.filter(c => c.id !== caseId));
-    setSelectedCase(null);
-    setComment('');
-    
-    toast({
-      title: "Case approved",
-      description: "Case has been published to the database",
-    });
-  };
-
-  const handleReject = (caseId: string) => {
-    if (!comment.trim()) {
-      toast({
-        title: "Comment required",
-        description: "Please add a reason for rejection",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setCases(prev => prev.filter(c => c.id !== caseId));
-    setSelectedCase(null);
-    setComment('');
-    
-    toast({
-      title: "Case rejected",
-      description: "Case has been sent back for revision",
-      variant: "destructive"
-    });
-  };
-
-  const handleBatchApprove = () => {
-    const pendingCases = cases.filter(c => c.stage === 'approve');
-    setCases(prev => prev.filter(c => c.stage !== 'approve'));
-    
-    toast({
-      title: "Batch approval complete",
-      description: `${pendingCases.length} cases approved and published`,
-    });
   };
 
   return (
@@ -143,7 +74,7 @@ const CaseWorkflow = () => {
                 <SelectItem value="urgent">Urgent Only</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handleBatchApprove} disabled={!cases.some(c => c.stage === 'approve')}>
+            <Button onClick={() => {}} disabled={!cases.some(c => c.workflow_stage === 'approved')}>
               <CheckCircle className="h-4 w-4 mr-2" />
               Batch Approve
             </Button>
@@ -154,33 +85,33 @@ const CaseWorkflow = () => {
         <div className="grid grid-cols-5 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-yellow-500">
-              {cases.filter(c => c.stage === 'pending_review').length}
+              {cases.filter(c => c.workflow_stage === 'pending_review').length}
             </p>
             <p className="text-xs text-muted-foreground">Pending</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-500">
-              {cases.filter(c => c.stage === 'review').length}
+              {cases.filter(c => c.workflow_stage === 'under_review').length}
             </p>
             <p className="text-xs text-muted-foreground">In Review</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-purple-500">
-              {cases.filter(c => c.stage === 'edit').length}
+              {cases.filter(c => c.workflow_stage === 'needs_editing').length}
             </p>
             <p className="text-xs text-muted-foreground">Editing</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-green-500">
-              {cases.filter(c => c.stage === 'approve').length}
+              {cases.filter(c => c.workflow_stage === 'approved').length}
             </p>
             <p className="text-xs text-muted-foreground">Ready</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-red-500">
-              {cases.filter(c => c.priority === 'urgent').length}
+              {cases.filter(c => c.severity === 'critical').length}
             </p>
-            <p className="text-xs text-muted-foreground">Urgent</p>
+            <p className="text-xs text-muted-foreground">Critical</p>
           </div>
         </div>
       </Card>
@@ -202,15 +133,15 @@ const CaseWorkflow = () => {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h4 className="font-semibold">{caseItem.caseNumber}</h4>
-                      <p className="text-sm text-primary">{caseItem.crimeType}</p>
+                      <h4 className="font-semibold">{caseItem.case_number}</h4>
+                      <p className="text-sm text-primary">{caseItem.crime_type}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Badge className={getPriorityColor(caseItem.priority)}>
-                        {caseItem.priority}
+                      <Badge className={getSeverityColor(caseItem.severity)}>
+                        {caseItem.severity}
                       </Badge>
-                      <Badge className={getStageColor(caseItem.stage)}>
-                        {caseItem.stage.replace('_', ' ')}
+                      <Badge className={getStageColor(caseItem.workflow_stage)}>
+                        {caseItem.workflow_stage.replace('_', ' ')}
                       </Badge>
                     </div>
                   </div>
@@ -218,24 +149,10 @@ const CaseWorkflow = () => {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {format(new Date(caseItem.submittedAt), 'MMM d, HH:mm')}
+                      {format(new Date(caseItem.date_reported), 'MMM d, HH:mm')}
                     </span>
                     <span>{caseItem.location}</span>
                   </div>
-
-                  {caseItem.assignedTo && (
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Assigned to: </span>
-                      <span className="font-medium">{caseItem.assignedTo}</span>
-                    </div>
-                  )}
-
-                  {caseItem.comments && caseItem.comments.length > 0 && (
-                    <div className="mt-2 flex items-center gap-1 text-sm text-accent">
-                      <MessageSquare className="h-4 w-4" />
-                      {caseItem.comments.length} comment(s)
-                    </div>
-                  )}
                 </Card>
               ))}
             </div>
@@ -247,74 +164,40 @@ const CaseWorkflow = () => {
           {selectedCase ? (
             <div className="space-y-4">
               <div>
-                <h3 className="font-semibold text-lg mb-2">{selectedCase.caseNumber}</h3>
-                <p className="text-primary">{selectedCase.crimeType}</p>
+                <h3 className="font-semibold text-lg mb-2">{selectedCase.case_number}</h3>
+                <p className="text-primary">{selectedCase.crime_type}</p>
                 <p className="text-sm text-muted-foreground">{selectedCase.location}</p>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Workflow Stage</label>
                 <Select
-                  value={selectedCase.stage}
-                  onValueChange={(value) => handleStageChange(selectedCase.id, value as WorkflowCase['stage'])}
+                  value={selectedCase.workflow_stage}
+                  onValueChange={(value) => updateStage.mutate({ caseId: selectedCase.id, stage: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending_review">Pending Review</SelectItem>
-                    <SelectItem value="review">In Review</SelectItem>
-                    <SelectItem value="edit">Needs Editing</SelectItem>
-                    <SelectItem value="approve">Ready to Approve</SelectItem>
-                    <SelectItem value="publish">Published</SelectItem>
+                    <SelectItem value="under_review">Under Review</SelectItem>
+                    <SelectItem value="needs_editing">Needs Editing</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Add Comment</label>
-                <Textarea
-                  placeholder="Enter your review comments..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={4}
-                />
-              </div>
-
-              {selectedCase.comments && selectedCase.comments.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Previous Comments</label>
-                  <div className="space-y-2">
-                    {selectedCase.comments.map((c) => (
-                      <div key={c.id} className="p-3 bg-muted rounded text-sm">
-                        <p className="font-medium">{c.author}</p>
-                        <p className="text-muted-foreground text-xs mb-1">
-                          {format(new Date(c.timestamp), 'PPp')}
-                        </p>
-                        <p>{c.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="flex gap-2 pt-4">
                 <Button
                   className="flex-1"
-                  onClick={() => handleApprove(selectedCase.id)}
-                  disabled={!comment.trim()}
+                  onClick={() => {
+                    approveCase.mutate(selectedCase.id);
+                    setSelectedCase(null);
+                  }}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="flex-1"
-                  onClick={() => handleReject(selectedCase.id)}
-                  disabled={!comment.trim()}
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Reject
+                  Approve & Publish
                 </Button>
               </div>
             </div>

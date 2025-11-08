@@ -6,15 +6,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { 
   Upload, FileText, CheckCircle, AlertCircle, 
-  X, Download, Clock 
+  Download, Clock 
 } from 'lucide-react';
-import { UploadedFile } from '@/types/admin';
-import { mockUploadedFiles } from '@/utils/mockAdminData';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useUploadedFiles } from '@/hooks/useUploadedFiles';
 
 const DataUploadPanel = () => {
-  const [files, setFiles] = useState<UploadedFile[]>(mockUploadedFiles);
+  const { files, uploadFile } = useUploadedFiles();
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
@@ -56,35 +55,11 @@ const DataUploadPanel = () => {
         return;
       }
 
-      const newFile: UploadedFile = {
-        id: Math.random().toString(36).substr(2, 9),
-        fileName: file.name,
-        fileType: fileType as 'csv' | 'json' | 'xml',
-        uploadedBy: 'Admin User',
-        uploadedAt: new Date().toISOString(),
-        status: 'processing',
-        recordCount: 0
-      };
-
-      setFiles(prev => [newFile, ...prev]);
-
-      // Simulate processing
-      setTimeout(() => {
-        setFiles(prev => prev.map(f => 
-          f.id === newFile.id 
-            ? { ...f, status: 'completed', recordCount: Math.floor(Math.random() * 100) + 10 }
-            : f
-        ));
-        
-        toast({
-          title: "Upload successful",
-          description: `${file.name} has been processed successfully.`
-        });
-      }, 3000);
+      uploadFile.mutate(file);
     });
   };
 
-  const getStatusIcon = (status: UploadedFile['status']) => {
+  const getStatusIcon = (status: 'processing' | 'completed' | 'failed') => {
     switch (status) {
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -95,7 +70,7 @@ const DataUploadPanel = () => {
     }
   };
 
-  const getStatusColor = (status: UploadedFile['status']) => {
+  const getStatusColor = (status: 'processing' | 'completed' | 'failed') => {
     switch (status) {
       case 'completed':
         return 'bg-green-500/10 text-green-500 border-green-500/20';
@@ -181,9 +156,9 @@ const DataUploadPanel = () => {
                   <div className="flex items-center gap-3 flex-1">
                     <FileText className="h-5 w-5 text-primary flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{file.fileName}</p>
+                      <p className="font-medium truncate">{file.filename}</p>
                       <p className="text-xs text-muted-foreground">
-                        {file.uploadedBy} • {format(new Date(file.uploadedAt), 'PPp')}
+                        {format(new Date(file.uploaded_at), 'PPp')}
                       </p>
                     </div>
                   </div>
@@ -199,35 +174,29 @@ const DataUploadPanel = () => {
                   <Progress value={66} className="h-2" />
                 )}
 
-                {file.status === 'completed' && (
+                {file.status === 'completed' && file.records_count && (
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
                     <span className="flex items-center gap-1">
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      {file.recordCount} records
+                      {file.records_count} records
                     </span>
-                    {file.errorCount !== undefined && file.errorCount > 0 && (
-                      <span className="flex items-center gap-1 text-yellow-500">
-                        <AlertCircle className="h-4 w-4" />
-                        {file.errorCount} warnings
-                      </span>
-                    )}
                   </div>
                 )}
 
-                {file.validationErrors && file.validationErrors.length > 0 && (
+                {file.errors && Array.isArray(file.errors) && file.errors.length > 0 && (
                   <div className="mt-3 p-3 bg-yellow-500/10 rounded border border-yellow-500/20">
                     <p className="text-sm font-medium text-yellow-500 mb-2">
                       Validation Warnings:
                     </p>
                     <div className="space-y-1">
-                      {file.validationErrors.slice(0, 3).map((error, idx) => (
+                      {file.errors.slice(0, 3).map((error: any, idx: number) => (
                         <p key={idx} className="text-xs text-muted-foreground">
-                          Row {error.row}, {error.field}: {error.message}
+                          {error.message || JSON.stringify(error)}
                         </p>
                       ))}
-                      {file.validationErrors.length > 3 && (
+                      {file.errors.length > 3 && (
                         <p className="text-xs text-muted-foreground">
-                          +{file.validationErrors.length - 3} more warnings
+                          +{file.errors.length - 3} more warnings
                         </p>
                       )}
                     </div>

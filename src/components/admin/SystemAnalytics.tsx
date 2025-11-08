@@ -5,11 +5,11 @@ import {
   TrendingUp, TrendingDown, Activity, Users, 
   Search, Database, Clock, AlertCircle 
 } from 'lucide-react';
-import { ActivityLog } from '@/types/admin';
-import { mockActivityLogs } from '@/utils/mockAdminData';
 import { format } from 'date-fns';
+import { useActivityLogs } from '@/hooks/useActivityLogs';
 
 const SystemAnalytics = () => {
+  const { logs } = useActivityLogs(50);
   const metrics = [
     { label: 'Total Searches (24h)', value: '1,247', change: 12.5, trend: 'up' as const, icon: Search },
     { label: 'Active Users (Now)', value: '42', change: -3.2, trend: 'down' as const, icon: Users },
@@ -133,7 +133,7 @@ const SystemAnalytics = () => {
         <h3 className="text-lg font-semibold mb-4">Recent System Activity</h3>
         <ScrollArea className="h-[400px]">
           <div className="space-y-3">
-            {mockActivityLogs.map((log) => (
+            {logs.map((log) => (
               <div key={log.id} className="flex gap-4 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                 <div className="flex-shrink-0">
                   <Badge variant="outline" className={getActionColor(log.action)}>
@@ -141,14 +141,14 @@ const SystemAnalytics = () => {
                   </Badge>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{log.user}</p>
-                  <p className="text-sm text-muted-foreground">{log.resource}</p>
+                  <p className="font-medium truncate">{log.user_name || 'Unknown User'}</p>
+                  <p className="text-sm text-muted-foreground">{log.action}</p>
                   {log.details && (
                     <p className="text-xs text-muted-foreground mt-1">{log.details}</p>
                   )}
                 </div>
                 <div className="flex-shrink-0 text-sm text-muted-foreground">
-                  {format(new Date(log.timestamp), 'HH:mm')}
+                  {format(new Date(log.created_at), 'HH:mm')}
                 </div>
               </div>
             ))}

@@ -20,95 +20,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { 
-  UserPlus, UserCheck, UserX, Shield, Mail, 
-  Search, MoreVertical, Ban, CheckCircle 
+  UserPlus, UserCheck, UserX, 
+  Search, Ban, CheckCircle 
 } from 'lucide-react';
-import { User } from '@/types/admin';
-import { mockUsers } from '@/utils/mockAdminData';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const { users, updateUserRole } = useAdminUsers();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRole, setFilterRole] = useState<string>('all');
-  const { toast } = useToast();
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.badgeNumber?.toLowerCase().includes(searchQuery.toLowerCase());
+      user.badge_number?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     
-    return matchesSearch && matchesStatus && matchesRole;
+    return matchesSearch && matchesRole;
   });
 
-  const handleApproveUser = (userId: string) => {
-    setUsers(prev => prev.map(u =>
-      u.id === userId ? { ...u, status: 'approved' as const, isActive: true } : u
-    ));
-    
-    toast({
-      title: "User approved",
-      description: "Registration has been approved. User can now access the system.",
-    });
-  };
-
-  const handleSuspendUser = (userId: string) => {
-    setUsers(prev => prev.map(u =>
-      u.id === userId ? { ...u, status: 'suspended' as const, isActive: false } : u
-    ));
-    
-    toast({
-      title: "User suspended",
-      description: "User access has been suspended.",
-      variant: "destructive"
-    });
-  };
-
-  const handleReactivateUser = (userId: string) => {
-    setUsers(prev => prev.map(u =>
-      u.id === userId ? { ...u, status: 'approved' as const, isActive: true } : u
-    ));
-    
-    toast({
-      title: "User reactivated",
-      description: "User access has been restored.",
-    });
-  };
-
-  const handleRoleChange = (userId: string, newRole: User['role']) => {
-    setUsers(prev => prev.map(u =>
-      u.id === userId ? { ...u, role: newRole } : u
-    ));
-    
-    toast({
-      title: "Role updated",
-      description: `User role changed to ${newRole.replace('_', ' ')}`,
-    });
-  };
-
-  const getStatusColor = (status: User['status']) => {
-    switch (status) {
-      case 'approved':
-        return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'pending':
-        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'suspended':
-        return 'bg-red-500/10 text-red-500 border-red-500/20';
-    }
-  };
-
-  const getRoleIcon = (role: User['role']) => {
-    return <Shield className="h-4 w-4" />;
-  };
-
-  const pendingCount = users.filter(u => u.status === 'pending').length;
-  const activeCount = users.filter(u => u.isActive).length;
-  const suspendedCount = users.filter(u => u.status === 'suspended').length;
+  const activeCount = users.filter(u => u.is_active).length;
 
   return (
     <div className="space-y-6">
@@ -138,29 +71,6 @@ const UserManagement = () => {
           </div>
         </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg bg-yellow-500/10">
-              <UserPlus className="h-5 w-5 text-yellow-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{pendingCount}</p>
-              <p className="text-xs text-muted-foreground">Pending</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg bg-red-500/10">
-              <UserX className="h-5 w-5 text-red-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{suspendedCount}</p>
-              <p className="text-xs text-muted-foreground">Suspended</p>
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Filters */}
@@ -177,18 +87,6 @@ const UserManagement = () => {
               />
             </div>
           </div>
-
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
-            </SelectContent>
-          </Select>
 
           <Select value={filterRole} onValueChange={setFilterRole}>
             <SelectTrigger className="w-[180px]">
@@ -213,10 +111,7 @@ const UserManagement = () => {
                 <TableHead>User</TableHead>
                 <TableHead>Badge</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead>Last Login</TableHead>
-                <TableHead>Permissions</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -224,20 +119,23 @@ const UserManagement = () => {
                 <TableRow key={user.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{user.email}</p>
+                      <p className="font-medium">{user.full_name || user.email}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
                       <p className="text-xs text-muted-foreground">
-                        Joined {format(new Date(user.createdAt), 'MMM d, yyyy')}
+                        Joined {format(new Date(user.created_at), 'MMM d, yyyy')}
                       </p>
                     </div>
                   </TableCell>
                   <TableCell>
-                    {user.badgeNumber || <span className="text-muted-foreground">-</span>}
+                    {user.badge_number || <span className="text-muted-foreground">-</span>}
                   </TableCell>
                   <TableCell>
                     <Select
                       value={user.role}
-                      onValueChange={(value) => handleRoleChange(user.id, value as User['role'])}
-                      disabled={user.status === 'pending'}
+                      onValueChange={(value) => updateUserRole.mutate({ 
+                        userId: user.id, 
+                        role: value as 'investigator' | 'senior_investigator' | 'admin' 
+                      })}
                     >
                       <SelectTrigger className="w-[160px]">
                         <SelectValue />
@@ -250,56 +148,13 @@ const UserManagement = () => {
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(user.status)}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {user.lastLogin ? (
+                    {user.last_login ? (
                       <span className="text-sm">
-                        {format(new Date(user.lastLogin), 'MMM d, HH:mm')}
+                        {format(new Date(user.last_login), 'MMM d, HH:mm')}
                       </span>
                     ) : (
                       <span className="text-sm text-muted-foreground">Never</span>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {user.permissions.length} permissions
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {user.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleApproveUser(user.id)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                      )}
-                      {user.status === 'approved' && user.isActive && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleSuspendUser(user.id)}
-                        >
-                          <Ban className="h-4 w-4 mr-1" />
-                          Suspend
-                        </Button>
-                      )}
-                      {user.status === 'suspended' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleReactivateUser(user.id)}
-                        >
-                          <UserCheck className="h-4 w-4 mr-1" />
-                          Reactivate
-                        </Button>
-                      )}
-                    </div>
                   </TableCell>
                 </TableRow>
               ))}

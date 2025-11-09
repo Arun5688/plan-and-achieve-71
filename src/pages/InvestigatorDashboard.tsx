@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VoiceCommandCenter from "@/components/VoiceCommandCenter";
 import CaseDetailView from "@/components/CaseDetailView";
 import CaseMatchAnalyzer from "@/components/CaseMatchAnalyzer";
+import InvestigatorChatbot from "@/components/investigator/InvestigatorChatbot";
 import { ParsedCommand } from "@/utils/nlpProcessor";
 import { Case, SearchFilters } from "@/types/case";
 import { useCases } from "@/hooks/useCases";
@@ -197,6 +198,8 @@ const InvestigatorDashboard = () => {
           onOpenChange={() => setSelectedCase(null)}
         />
       )}
+      
+      <InvestigatorChatbot />
     </Layout>
   );
 };

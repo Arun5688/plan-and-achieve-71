@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.admin-chat]
 verify_jwt = true
+
+[functions.investigator-chat]
+verify_jwt = true

@@ -1,12 +1,11 @@
 import Layout from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Database, BarChart3, CheckCircle, Mic } from "lucide-react";
+import { Users, Database, BarChart3, CheckCircle } from "lucide-react";
 import DataUploadPanel from "@/components/admin/DataUploadPanel";
 import CaseWorkflow from "@/components/admin/CaseWorkflow";
 import UserManagement from "@/components/admin/UserManagement";
 import SystemAnalytics from "@/components/admin/SystemAnalytics";
-import VoiceCommandCenter from "@/components/VoiceCommandCenter";
 import AdminChatbot from "@/components/admin/AdminChatbot";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { useWorkflowCases } from "@/hooks/useWorkflowCases";
@@ -90,10 +89,6 @@ const AdminDashboard = () => {
             <TabsTrigger value="data">Data Management</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="voice">
-              <Mic className="h-4 w-4 mr-2" />
-              Voice Commands
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -123,10 +118,6 @@ const AdminDashboard = () => {
 
           <TabsContent value="analytics" className="space-y-4">
             <SystemAnalytics />
-          </TabsContent>
-
-          <TabsContent value="voice" className="space-y-4">
-            <VoiceCommandCenter />
           </TabsContent>
         </Tabs>
       </div>

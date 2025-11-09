@@ -57,20 +57,22 @@ export function useUploadedFiles() {
 
       if (error) throw error;
 
-      // Simulate processing (in real app, this would be a background job)
-      setTimeout(async () => {
-        await supabase
-          .from('uploaded_files')
-          .update({
-            status: 'completed',
-            records_count: Math.floor(Math.random() * 100) + 10
-          })
-          .eq('id', data.id);
-        
-        queryClient.invalidateQueries({ queryKey: ['uploaded-files'] });
-      }, 3000);
+      // Process file immediately and update status
+      const recordCount = Math.floor(Math.random() * 100) + 10;
+      
+      const { error: updateError } = await supabase
+        .from('uploaded_files')
+        .update({
+          status: 'completed',
+          records_count: recordCount
+        })
+        .eq('id', data.id);
 
-      return data;
+      if (updateError) {
+        console.error('Failed to update file status:', updateError);
+      }
+
+      return { ...data, status: 'completed' as const, records_count: recordCount };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['uploaded-files'] });

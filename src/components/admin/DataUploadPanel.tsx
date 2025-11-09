@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Upload, FileText, CheckCircle, AlertCircle, 
-  Download, Clock 
+  Download, Clock, Edit3
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useUploadedFiles } from '@/hooks/useUploadedFiles';
+import ManualCaseEntry from './ManualCaseEntry';
 
 const DataUploadPanel = () => {
   const { files, uploadFile } = useUploadedFiles();
@@ -83,8 +85,21 @@ const DataUploadPanel = () => {
 
   return (
     <div className="space-y-6">
-      {/* Upload Area */}
-      <Card className="p-6">
+      <Tabs defaultValue="upload" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="upload">
+            <Upload className="h-4 w-4 mr-2" />
+            File Upload
+          </TabsTrigger>
+          <TabsTrigger value="manual">
+            <Edit3 className="h-4 w-4 mr-2" />
+            Manual Entry
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upload" className="space-y-6">
+          {/* Upload Area */}
+          <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Upload className="h-5 w-5 text-primary" />
           Upload Case Data
@@ -207,6 +222,12 @@ const DataUploadPanel = () => {
           </div>
         </ScrollArea>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="manual">
+          <ManualCaseEntry />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

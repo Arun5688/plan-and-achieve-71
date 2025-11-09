@@ -14,6 +14,65 @@ serve(async (req) => {
   try {
     const { caseDetails } = await req.json();
     
+    // Input validation
+    if (!caseDetails || typeof caseDetails !== 'object') {
+      return new Response(JSON.stringify({ error: 'Invalid case details' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const { title, description, crime_type, severity, location, suspect_description, evidence_description } = caseDetails;
+    
+    if (!title || typeof title !== 'string' || title.length < 5 || title.length > 200) {
+      return new Response(JSON.stringify({ error: 'Invalid title: must be 5-200 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!description || typeof description !== 'string' || description.length < 20 || description.length > 2000) {
+      return new Response(JSON.stringify({ error: 'Invalid description: must be 20-2000 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!crime_type || typeof crime_type !== 'string' || crime_type.length < 3 || crime_type.length > 100) {
+      return new Response(JSON.stringify({ error: 'Invalid crime type: must be 3-100 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!['low', 'medium', 'high', 'critical'].includes(severity)) {
+      return new Response(JSON.stringify({ error: 'Invalid severity: must be low, medium, high, or critical' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (location && (typeof location !== 'string' || location.length > 200)) {
+      return new Response(JSON.stringify({ error: 'Invalid location: must be less than 200 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (suspect_description && (typeof suspect_description !== 'string' || suspect_description.length > 1000)) {
+      return new Response(JSON.stringify({ error: 'Invalid suspect description: must be less than 1000 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (evidence_description && (typeof evidence_description !== 'string' || evidence_description.length > 1000)) {
+      return new Response(JSON.stringify({ error: 'Invalid evidence description: must be less than 1000 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     if (!caseDetails) {
       return new Response(
         JSON.stringify({ error: 'Case details are required' }),

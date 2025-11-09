@@ -29,7 +29,7 @@ const LoginSelection = () => {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Investigator Login */}
           <Card className="p-8 hover:border-primary transition-all duration-300 cursor-pointer group"
-                onClick={() => navigate("/investigator-login")}>
+                onClick={() => navigate("/auth")}>
             <div className="text-center space-y-4">
               <div className="flex justify-center">
                 <div className="rounded-lg bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors">
@@ -48,7 +48,7 @@ const LoginSelection = () => {
                 className="w-full"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate("/investigator-login");
+                  navigate("/auth");
                 }}
               >
                 Investigator Login
@@ -58,7 +58,7 @@ const LoginSelection = () => {
 
           {/* Admin Login */}
           <Card className="p-8 hover:border-accent transition-all duration-300 cursor-pointer group"
-                onClick={() => navigate("/admin-login")}>
+                onClick={() => navigate("/auth")}>
             <div className="text-center space-y-4">
               <div className="flex justify-center">
                 <div className="rounded-lg bg-accent/10 p-4 group-hover:bg-accent/20 transition-colors">
@@ -77,7 +77,7 @@ const LoginSelection = () => {
                 className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate("/admin-login");
+                  navigate("/auth");
                 }}
               >
                 Administrator Login

@@ -10,6 +10,17 @@ import { Loader2, Search, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { z } from 'zod';
+
+const caseDetailsSchema = z.object({
+  title: z.string().min(5, "Title must be at least 5 characters").max(200, "Title must be less than 200 characters"),
+  description: z.string().min(20, "Description must be at least 20 characters").max(2000, "Description must be less than 2000 characters"),
+  crime_type: z.string().min(3, "Crime type must be at least 3 characters").max(100, "Crime type must be less than 100 characters"),
+  severity: z.enum(["low", "medium", "high", "critical"], { errorMap: () => ({ message: "Please select a valid severity level" }) }),
+  location: z.string().max(200, "Location must be less than 200 characters"),
+  suspect_description: z.string().max(1000, "Suspect description must be less than 1000 characters"),
+  evidence_description: z.string().max(1000, "Evidence description must be less than 1000 characters"),
+});
 
 interface CaseMatch {
   case_id: string;
@@ -40,10 +51,14 @@ const CaseMatchAnalyzer = () => {
   });
 
   const handleAnalyze = async () => {
-    if (!caseDetails.title || !caseDetails.description || !caseDetails.crime_type) {
+    // Validate input with zod schema
+    const validationResult = caseDetailsSchema.safeParse(caseDetails);
+    
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
       toast({
-        title: 'Missing Information',
-        description: 'Please fill in at least title, description, and crime type',
+        title: 'Validation Error',
+        description: firstError.message,
         variant: 'destructive'
       });
       return;

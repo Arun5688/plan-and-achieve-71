@@ -57,22 +57,82 @@ export function useUploadedFiles() {
 
       if (error) throw error;
 
-      // Process file immediately and update status
-      const recordCount = Math.floor(Math.random() * 100) + 10;
-      
-      const { error: updateError } = await supabase
-        .from('uploaded_files')
-        .update({
-          status: 'completed',
-          records_count: recordCount
-        })
-        .eq('id', data.id);
+      try {
+        // Upload file to storage
+        const filePath = `${user.id}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('case-files')
+          .upload(filePath, file);
 
-      if (updateError) {
-        console.error('Failed to update file status:', updateError);
+        if (uploadError) throw uploadError;
+
+        // Read and parse file content
+        const fileContent = await file.text();
+        let cases: any[] = [];
+
+        if (fileType === 'csv') {
+          // Parse CSV
+          const lines = fileContent.split('\n').filter(line => line.trim());
+          const headers = lines[0].split(',').map(h => h.trim());
+          
+          for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim());
+            const caseObj: any = {};
+            headers.forEach((header, idx) => {
+              caseObj[header] = values[idx];
+            });
+            cases.push(caseObj);
+          }
+        } else if (fileType === 'json') {
+          // Parse JSON
+          const parsed = JSON.parse(fileContent);
+          cases = Array.isArray(parsed) ? parsed : [parsed];
+        }
+
+        // Insert cases into database
+        const casesToInsert = cases.map(c => ({
+          case_number: c.case_number || c.case_id || c.id || `AUTO-${Date.now()}`,
+          title: c.title || 'Untitled Case',
+          description: c.description || '',
+          crime_type: c.crime_type || 'Unknown',
+          severity: (c.severity || 'medium').toLowerCase(),
+          status: 'open',
+          location: c.location || 'Unknown',
+          date_reported: c.date_reported || c.date || new Date().toISOString(),
+          assigned_officer: user.id,
+          workflow_stage: 'pending_review'
+        }));
+
+        const { error: insertError } = await supabase
+          .from('cases')
+          .insert(casesToInsert);
+
+        if (insertError) throw insertError;
+
+        // Update file status to completed
+        const { error: updateError } = await supabase
+          .from('uploaded_files')
+          .update({
+            status: 'completed',
+            records_count: casesToInsert.length
+          })
+          .eq('id', data.id);
+
+        if (updateError) throw updateError;
+
+        return { ...data, status: 'completed' as const, records_count: casesToInsert.length };
+      } catch (err: any) {
+        // Update status to failed
+        await supabase
+          .from('uploaded_files')
+          .update({
+            status: 'failed',
+            errors: { message: err.message }
+          })
+          .eq('id', data.id);
+
+        throw err;
       }
-
-      return { ...data, status: 'completed' as const, records_count: recordCount };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['uploaded-files'] });
